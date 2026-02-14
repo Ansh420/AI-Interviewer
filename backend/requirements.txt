@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-dotenv
+google-generativeai
+elevenlabs
+pillow
+sqlalchemy
+pydantic
+pydantic-settings
+python-multipart
