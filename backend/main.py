@@ -2,7 +2,8 @@ import base64
 import io
 import os
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import fitz  # PyMuPDF
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from elevenlabs.client import ElevenLabs
@@ -15,6 +16,9 @@ from database import SessionLocal, InterviewReport
 load_dotenv()
 app = FastAPI()
 el_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+
+# Global storage for resume context (In-memory for simplicity in this version)
+resume_context = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,17 +39,45 @@ def generate_voice(text: str):
         )
         audio_bytes = b"".join(list(audio))
 
-        return base64.b64encode(audio).decode('utf-8')
+        return base64.b64encode(audio_bytes).decode('utf-8')
     except Exception as e:
         print(f"TTS Error: {e}")
         return None
 
-# 3. WebSocket Endpoint
+# 3. Resume Upload Endpoint
+@app.post("/upload_resume")
+async def upload_resume(file: UploadFile = File(...)):
+    """Extracts text from uploaded PDF and stores it for the session."""
+    try:
+        content = await file.read()
+        doc = fitz.open(stream=content, filetype="pdf")
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        
+        # Store resume text (simplified: one global resume for now)
+        resume_context["current_resume"] = text
+        return {"message": "Resume uploaded and processed successfully", "preview": text[:200]}
+    except Exception as e:
+        return {"error": f"Failed to process PDF: {str(e)}"}
+
+# 4. WebSocket Endpoint
 @app.websocket("/ws/interview")
 async def interview_handler(websocket: WebSocket):
     await websocket.accept()
-    # Start a stateful chat session
-    chat_session = interview_agent.model.start_chat(history=[])
+    
+    # Check if we have a resume context to tailor the interview
+    resume_text = resume_context.get("current_resume", "No resume provided.")
+    
+    # Start a stateful chat session with tailored instructions
+    custom_instruction = interview_agent.system_instruction
+    if resume_text != "No resume provided.":
+        custom_instruction += f"\n\nCANDIDATE RESUME:\n{resume_text}\n\nTailor your questions to their experience and projects mentioned in the resume."
+
+    chat_session = interview_agent.start_chat(custom_instruction=custom_instruction)
+    # Send the resume context as the first hidden message to the AI
+    chat_session.send_message(message=f"SYSTEM: Use the resume provided in system instructions to tailor the interview.")
+    
     db = SessionLocal()
     
     print("🚀 Session Started")
@@ -84,11 +116,21 @@ async def interview_handler(websocket: WebSocket):
                     img_b64 = data['frame'].split(",")[1]
                     img = Image.open(io.BytesIO(base64.b64decode(img_b64)))
                     
-                    # Get AI Question
-                    question = await interview_agent.get_question(chat_session, img, data['text'])
+                    # Performance: Downscale image for faster AI vision processing
+                    img.thumbnail((720, 720)) 
                     
-                    # Generate Voice
-                    audio_b64 = generate_voice(question)
+                    # Get AI Question
+                    question = await interview_agent.get_question(
+                        chat_session, 
+                        img, 
+                        data['text'],
+                        code=data.get('code')
+                    )
+                    
+                    # Generate Voice (Performance: Skip if response is too long or handle errors gracefully)
+                    audio_b64 = None
+                    if len(question) < 500:
+                        audio_b64 = generate_voice(question)
 
                     await websocket.send_json({
                         "type": "AI_RESPONSE",

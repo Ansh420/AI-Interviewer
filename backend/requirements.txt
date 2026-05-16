@@ -1,10 +1,12 @@
 fastapi
 uvicorn
 python-dotenv
-google-generativeai
+google-genai
 elevenlabs
 pillow
 sqlalchemy
 pydantic
 pydantic-settings
 python-multipart
+PyMuPDF
+pypdf
