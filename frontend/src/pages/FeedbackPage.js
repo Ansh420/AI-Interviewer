@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FeedbackReport = ({ scores, reportId }) => {
+const FeedbackPage = ({ scores, reportId }) => {
   // If scores weren't passed directly, you could fetch them here using the reportId
   const { tech, clarity, originality, feedback } = scores || {
     tech: 0,
@@ -121,4 +121,4 @@ const buttonStyle = {
   transition: 'background 0.3s'
 };
 
-export default FeedbackReport;
+export default FeedbackPage;

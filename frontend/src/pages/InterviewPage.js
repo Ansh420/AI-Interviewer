@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import { Camera, Code2, Monitor, Mic, MicOff, Settings2 } from 'lucide-react';
 
-const InterviewSession = ({ socket, onStop, initialMode }) => {
+const InterviewPage = ({ socket, onStop, initialMode }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const intervalRef = useRef(null);
@@ -186,44 +186,8 @@ const InterviewSession = ({ socket, onStop, initialMode }) => {
            </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .session-container { padding: 25px; display: flex; flex-direction: column; gap: 25px; width: 100%; max-width: 1400px; margin: 0 auto; }
-        .session-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; }
-        
-        .ai-status { display: flex; align-items: center; gap: 20px; }
-        .ai-orb { width: 40px; height: 40px; border-radius: 50%; position: relative; }
-        .ai-orb.ready { background: #38bdf8; box-shadow: 0 0 20px #38bdf8; }
-        .ai-orb.thinking { background: #8b5cf6; animation: spin 2s linear infinite; }
-        @keyframes spin { 0% { transform: scale(1); box-shadow: 0 0 10px #8b5cf6; } 50% { transform: scale(1.2); box-shadow: 0 0 30px #8b5cf6; } 100% { transform: scale(1); box-shadow: 0 0 10px #8b5cf6; } }
-        
-        .lang-select { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 0 15px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; outline: none; }
-        .lang-select option { background: #0f172a; color: white; }
-
-        .label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); letter-spacing: 2px; }
-        .message { font-size: 1.1rem; font-weight: 500; }
-
-        .session-controls { display: flex; gap: 10px; }
-        .icon-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; }
-        .toggle-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); color: #38bdf8; padding: 0 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .toggle-btn.active { background: #38bdf8; color: white; }
-
-        .session-content { display: flex; gap: 20px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .session-content.split > * { flex: 1; }
-        .session-content.full .preview-wrapper { width: 100%; max-width: 900px; margin: 0 auto; }
-        
-        .pane-header { padding: 10px 15px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-muted); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.2); }
-        .editor-wrapper, .preview-wrapper { overflow: hidden; border: 1px solid var(--border); }
-        
-        .video-viewport { position: relative; aspect-ratio: 16/9; background: #000; }
-        .main-video { width: 100%; height: 100%; object-fit: cover; }
-        .video-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; cursor: pointer; transition: background 0.2s; }
-        .video-overlay:hover { background: rgba(0,0,0,0.4); color: #38bdf8; }
-        
-        .mic-status { padding: 15px; background: rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-muted); }
-      `}</style>
     </div>
   );
 };
 
-export default InterviewSession;
+export default InterviewPage;
