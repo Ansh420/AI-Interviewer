@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/api/v1";
 
 export const uploadResume = async (file) => {
   const formData = new FormData();
@@ -17,5 +17,6 @@ export const uploadResume = async (file) => {
 };
 
 export const getWebSocketUrl = () => {
-  return "ws://localhost:8000/api/v1/ws/interview";
+  const wsUrl = process.env.REACT_APP_WS_URL || "ws://localhost:8000/api/v1/ws/interview";
+  return wsUrl;
 };
