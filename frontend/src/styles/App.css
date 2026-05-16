@@ -37,6 +37,48 @@
 
 .app-footer { text-align: center; padding: 40px; color: #475569; font-size: 0.8rem; }
 
+.status-evaluating { color: #8b5cf6; }
+
+.evaluating-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  text-align: center;
+  gap: 20px;
+  min-height: 400px;
+}
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #38bdf8;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.evaluating-overlay h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #38bdf8, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.evaluating-overlay p {
+  color: #94a3b8;
+  max-width: 400px;
+}
+
 /* Session Styles moved from InterviewPage if needed, or kept separate */
 .session-container { padding: 25px; display: flex; flex-direction: column; gap: 25px; width: 100%; max-width: 1400px; margin: 0 auto; }
 .session-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; }

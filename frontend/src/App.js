@@ -65,6 +65,7 @@ function App() {
 
   const endInterview = () => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
+      setSessionStatus('evaluating');
       socketRef.current.send(JSON.stringify({ type: "FINISH" }));
     } else {
       setSessionStatus('idle');
@@ -78,7 +79,7 @@ function App() {
           <Terminal size={24} color="#38bdf8" />
           <span>AI Interviewer <small className="v-tag">v2.0</small></span>
         </div>
-        <div className={`status-badge ${sessionStatus === 'active' ? 'status-active' : 'status-idle'}`}>
+        <div className={`status-badge ${sessionStatus === 'active' ? 'status-active' : sessionStatus === 'evaluating' ? 'status-evaluating' : 'status-idle'}`}>
           <div className="pulse-dot"></div>
           {sessionStatus}
         </div>
@@ -130,15 +131,29 @@ function App() {
           </div>
         )}
 
-        {sessionStatus === 'active' && (
+        {(sessionStatus === 'active' || sessionStatus === 'evaluating') && (
           <div className="active-session-wrapper">
-            <InterviewPage 
-              socket={socketRef.current} 
-              onStop={endInterview} 
-              initialMode={interviewMode}
-            />
+            {sessionStatus === 'evaluating' ? (
+              <div className="evaluating-overlay glass-card">
+                <div className="loader"></div>
+                <h2>Analyzing Performance...</h2>
+                <p>Gemini is reviewing your session and generating detailed feedback.</p>
+              </div>
+            ) : (
+              <InterviewPage 
+                socket={socketRef.current} 
+                onStop={endInterview} 
+                initialMode={interviewMode}
+              />
+            )}
             <div className="session-footer">
-              <button onClick={endInterview} className="btn-danger">Terminate & Evaluate Session</button>
+              <button 
+                onClick={endInterview} 
+                className="btn-danger"
+                disabled={sessionStatus === 'evaluating'}
+              >
+                {sessionStatus === 'evaluating' ? "Processing..." : "Terminate & Evaluate Session"}
+              </button>
             </div>
           </div>
         )}
