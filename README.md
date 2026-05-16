@@ -101,8 +101,37 @@ npm install
 
 ---
 
-## 🖼️ UI Preview
-The interface features a modern **Glassmorphism** design with real-time status indicators, interactive editors, and high-fidelity video feedback.
+## 🖼️ Visual Tour
+
+### 🚀 Welcome Experience
+The entry point of the application, featuring a clean Glassmorphism design and resume upload integration.
+
+![Welcome Screen](https://via.placeholder.com/800x450?text=Welcome+Screen+Placeholder)
+*Tip: Replace this with `assets/screenshots/welcome.png`*
+
+### 💻 Live Interview & Coding
+The main orchestration hub where the AI analyzes your screen, voice, and code in real-time.
+
+| Project Presentation Mode | Coding Challenge Mode |
+| :---: | :---: |
+| ![Presentation](https://via.placeholder.com/400x250?text=Presentation+Mode) | ![Coding](https://via.placeholder.com/400x250?text=Coding+Mode) |
+
+### 📊 Performance Analytics
+Comprehensive feedback and scoring dashboard generated instantly after the session.
+
+![Scorecard](https://via.placeholder.com/800x450?text=Evaluation+Report+Placeholder)
+
+---
+
+## 🎥 Demo Video
+Want to see it in action? Watch the full walkthrough below:
+
+[![AI Interviewer Demo](https://via.placeholder.com/1200x600?text=Click+to+Watch+Demo+Video)](https://github.com/Ansh420/AI-Interviewer)
+
+> **User Action Required:** 
+> 1. Capture your own screenshots/recordings.
+> 2. Save them in the `assets/screenshots/` folder.
+> 3. Update the links above to point to your files (e.g., `![Welcome](assets/screenshots/welcome.png)`).
 
 ---
 
