@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, DateTime
+from sqlalchemy import Column, Integer, Text, DateTime, JSON
 import datetime
 from app.db.base import Base
 
@@ -9,4 +9,5 @@ class InterviewReport(Base):
     clarity_score = Column(Integer)
     originality_score = Column(Integer)
     feedback = Column(Text)
+    timeline_events = Column(JSON, nullable=True) # Stores list of {timestamp, type, content, marker}
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

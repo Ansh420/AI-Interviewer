@@ -79,6 +79,32 @@
   max-width: 400px;
 }
 
+/* Markdown Styles */
+.markdown-content {
+  text-align: left;
+  line-height: 1.6;
+}
+
+.markdown-content h3 {
+  margin-top: 20px;
+  color: #38bdf8;
+  font-size: 1.2rem;
+}
+
+.markdown-content ul {
+  margin-left: 20px;
+  margin-bottom: 15px;
+}
+
+.markdown-content li {
+  margin-bottom: 8px;
+  color: #cbd5e1;
+}
+
+.markdown-content strong {
+  color: #f8fafc;
+}
+
 /* Session Styles moved from InterviewPage if needed, or kept separate */
 .session-container { padding: 25px; display: flex; flex-direction: column; gap: 25px; width: 100%; max-width: 1400px; margin: 0 auto; }
 .session-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; }
@@ -105,3 +131,45 @@
 .video-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; cursor: pointer; transition: background 0.2s; }
 .video-overlay:hover { background: rgba(0,0,0,0.4); color: #38bdf8; }
 .mic-status { padding: 15px; background: rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-muted); }
+
+/* New Features Styles */
+.run-btn { background: #10b981; color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.run-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.terminal-wrapper { margin-top: 15px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; }
+.terminal-output { padding: 15px; color: #10b981; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; white-space: pre-wrap; max-height: 150px; overflow-y: auto; }
+
+.feedback-container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 40px 0; }
+.feedback-card { padding: 40px; text-align: center; display: flex; flex-direction: column; gap: 30px; }
+.feedback-header h1 { font-size: 2.5rem; font-weight: 800; margin-top: 10px; }
+.feedback-header p { color: #94a3b8; }
+
+.scores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.score-widget { background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+.score-bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+.score-bar-fill { height: 100%; transition: width 1s ease-out; }
+.score-info { display: flex; justify-content: space-between; align-items: center; }
+.score-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+.score-value { font-size: 1.25rem; font-weight: 800; }
+
+.video-review-section { text-align: left; }
+.video-review-section h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: #94a3b8; }
+.video-container { position: relative; background: #000; border-radius: 12px; overflow: hidden; }
+.review-video { width: 100%; aspect-ratio: 16/9; }
+
+.timeline-heatmap { position: relative; width: 100%; height: 12px; background: rgba(255,255,255,0.1); }
+.timeline-marker { position: absolute; top: 0; width: 4px; height: 100%; cursor: pointer; transition: transform 0.2s; }
+.timeline-marker:hover { transform: scaleY(1.5); z-index: 10; }
+.timeline-marker.blue { background: #38bdf8; }
+.timeline-marker.green { background: #10b981; }
+.timeline-marker.red { background: #ef4444; }
+
+.timeline-list { margin-top: 20px; display: flex; flex-direction: column; gap: 15px; }
+.timeline-item { display: flex; gap: 20px; padding: 20px; cursor: pointer; transition: transform 0.2s; text-align: left; }
+.timeline-item:hover { transform: translateX(10px); background: rgba(255,255,255,0.05); }
+.item-time { font-size: 0.75rem; color: #38bdf8; font-weight: 700; display: flex; align-items: center; gap: 4px; min-width: 60px; }
+.item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-weight: 700; }
+.item-content p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; }
+
+.feedback-summary { padding: 30px; text-align: left; border-left: 4px solid #38bdf8; }
+.feedback-summary h3 { margin-bottom: 15px; font-weight: 800; }
+.feedback-text { line-height: 1.8; color: #cbd5e1; font-style: italic; }

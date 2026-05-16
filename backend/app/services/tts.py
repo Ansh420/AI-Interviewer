@@ -1,21 +1,28 @@
 import base64
 import os
-from elevenlabs.client import ElevenLabs
+import io
+import asyncio
+import edge_tts
 from dotenv import load_dotenv
 
 load_dotenv()
-el_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
-def generate_voice(text: str):
-    """Generates audio bytes via ElevenLabs Flash v2.5."""
+async def generate_voice(text: str):
+    """Generates audio bytes via Microsoft Edge TTS (Free & Neural)."""
     try:
-        audio = el_client.generate(
-            text=text,
-            voice="JBFqnCBv7vXPZ7WpL6th", # Adam (Professional)
-            model="eleven_flash_v2_5"
-        )
-        audio_bytes = b"".join(list(audio))
-        return base64.b64encode(audio_bytes).decode('utf-8')
+        # Voice options: en-US-GuyNeural, en-US-AriaNeural, en-GB-SoniaNeural
+        voice = "en-US-AriaNeural"
+        communicate = edge_tts.Communicate(text, voice)
+        
+        audio_data = b""
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_data += chunk["data"]
+        
+        if not audio_data:
+            return None
+            
+        return base64.b64encode(audio_data).decode('utf-8')
     except Exception as e:
-        print(f"TTS Error: {e}")
+        print(f"TTS Error (Edge): {e}")
         return None

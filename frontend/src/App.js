@@ -12,6 +12,8 @@ function App() {
   const [finalScores, setFinalScores] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [sessionVideo, setSessionVideo] = useState(null);
+  const [timeline, setTimeline] = useState([]);
   const socketRef = useRef(null);
 
   const connectWebSocket = useCallback(() => {
@@ -27,6 +29,7 @@ function App() {
         if (data.type === "FINAL_REPORT") {
           setFinalScores(data.scores);
           setReportId(data.report_id);
+          setTimeline(data.timeline || []);
           setSessionStatus('finished');
         }
       };
@@ -137,13 +140,14 @@ function App() {
               <div className="evaluating-overlay glass-card">
                 <div className="loader"></div>
                 <h2>Analyzing Performance...</h2>
-                <p>Gemini is reviewing your session and generating detailed feedback.</p>
+                <p>AI is reviewing your session and generating detailed feedback.</p>
               </div>
             ) : (
               <InterviewPage 
                 socket={socketRef.current} 
                 onStop={endInterview} 
                 initialMode={interviewMode}
+                setSessionVideo={setSessionVideo}
               />
             )}
             <div className="session-footer">
@@ -159,7 +163,12 @@ function App() {
         )}
 
         {sessionStatus === 'finished' && (
-          <FeedbackPage scores={finalScores} reportId={reportId} />
+          <FeedbackPage 
+            scores={finalScores} 
+            reportId={reportId} 
+            videoUrl={sessionVideo} 
+            timeline={timeline}
+          />
         )}
       </main>
 

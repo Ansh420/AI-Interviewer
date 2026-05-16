@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { PlayCircle, Award, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 
-const FeedbackPage = ({ scores, reportId }) => {
-  // If scores weren't passed directly, you could fetch them here using the reportId
+const FeedbackPage = ({ scores, reportId, videoUrl, timeline }) => {
+  const videoRef = useRef(null);
+  
   const { tech, clarity, originality, feedback } = scores || {
     tech: 0,
     clarity: 0,
@@ -9,26 +12,75 @@ const FeedbackPage = ({ scores, reportId }) => {
     feedback: "No feedback available."
   };
 
-  return (
-    <div style={containerStyle}>
-      <div style={cardStyle}>
-        <h1 style={headerStyle}>Interview Performance Report</h1>
-        <p style={subHeaderStyle}>Session ID: #{reportId || 'N/A'}</p>
+  const jumpToTime = (time) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      videoRef.current.play();
+    }
+  };
 
-        <div style={gridStyle}>
-          <ScoreCircle label="Technical Depth" score={tech} color="#3498db" />
-          <ScoreCircle label="Clarity" score={clarity} color="#2ecc71" />
-          <ScoreCircle label="Originality" score={originality} color="#9b59b6" />
+  return (
+    <div className="feedback-container">
+      <div className="feedback-card glass-card">
+        <header className="feedback-header">
+          <Award size={48} color="#f59e0b" />
+          <h1>Interview Performance Report</h1>
+          <p>Session ID: #{reportId || 'N/A'}</p>
+        </header>
+
+        <div className="scores-grid">
+          <ScoreWidget label="Technical Depth" score={tech} color="#38bdf8" />
+          <ScoreWidget label="Communication" score={clarity} color="#10b981" />
+          <ScoreWidget label="Originality" score={originality} color="#a855f7" />
         </div>
 
-        <div style={feedbackSection}>
-          <h3 style={{ color: '#2c3e50', marginBottom: '10px' }}>Interviewer's Detailed Feedback</h3>
-          <p style={feedbackText}>{feedback}</p>
+        {videoUrl && (
+          <div className="video-review-section">
+            <h3><PlayCircle size={20} /> Video Review & Timeline</h3>
+            <div className="video-container glass-card">
+              <video ref={videoRef} src={videoUrl} controls className="review-video" />
+              
+              <div className="timeline-heatmap">
+                {timeline && timeline.map((event, idx) => (
+                  <div 
+                    key={idx}
+                    className={`timeline-marker ${event.marker || 'blue'}`}
+                    style={{ left: `${(event.timestamp / (timeline[timeline.length-1]?.timestamp || 1)) * 100}%` }}
+                    title={`${event.type}: ${event.timestamp}s`}
+                    onClick={() => jumpToTime(event.timestamp)}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <div className="timeline-list">
+              {timeline && timeline.filter(e => e.type === "CODE_EXECUTION").map((event, idx) => (
+                <div key={idx} className="timeline-item glass-card" onClick={() => jumpToTime(event.timestamp)}>
+                  <div className="item-time"><Clock size={12} /> {event.timestamp}s</div>
+                  <div className="item-content">
+                    <div className="item-header">
+                      {event.marker === 'red' ? <AlertCircle size={16} color="#ef4444" /> : <CheckCircle2 size={16} color="#10b981" />}
+                      <span>Code Execution Critique</span>
+                    </div>
+                    <p>{event.ai_comment}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="feedback-summary glass-card">
+          <h3>Overall Interviewer Feedback</h3>
+          <div className="feedback-text markdown-content">
+            <ReactMarkdown>{feedback}</ReactMarkdown>
+          </div>
         </div>
 
         <button 
           onClick={() => window.location.reload()} 
-          style={buttonStyle}
+          className="btn-primary"
+          style={{ marginTop: '20px' }}
         >
           Start New Interview
         </button>
@@ -37,88 +89,16 @@ const FeedbackPage = ({ scores, reportId }) => {
   );
 };
 
-// Helper Component for the Circular/Bar Scores
-const ScoreCircle = ({ label, score, color }) => (
-  <div style={scoreItemStyle}>
-    <div style={progressBarContainer}>
-      <div style={progressBar(score, color)} />
+const ScoreWidget = ({ label, score, color }) => (
+  <div className="score-widget">
+    <div className="score-bar-bg">
+      <div className="score-bar-fill" style={{ width: `${score}%`, backgroundColor: color }} />
     </div>
-    <span style={scoreLabel}>{label}</span>
-    <span style={scoreValue}>{score}%</span>
+    <div className="score-info">
+      <span className="score-label">{label}</span>
+      <span className="score-value">{score}%</span>
+    </div>
   </div>
 );
-
-// --- Styles ---
-const containerStyle = {
-  display: 'flex',
-  justifyContent: 'center',
-  padding: '40px 20px',
-  backgroundColor: '#f4f7f6',
-  minHeight: '80vh'
-};
-
-const cardStyle = {
-  backgroundColor: '#fff',
-  padding: '40px',
-  borderRadius: '16px',
-  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-  maxWidth: '800px',
-  width: '100%',
-  textAlign: 'center'
-};
-
-const headerStyle = { color: '#2c3e50', fontSize: '2rem', marginBottom: '5px' };
-const subHeaderStyle = { color: '#95a5a6', fontSize: '0.9rem', marginBottom: '30px' };
-
-const gridStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: '20px',
-  marginBottom: '40px'
-};
-
-const scoreItemStyle = { display: 'flex', flexDirection: 'column', alignItems: 'center' };
-
-const progressBarContainer = {
-  width: '100%',
-  height: '10px',
-  backgroundColor: '#ecf0f1',
-  borderRadius: '5px',
-  overflow: 'hidden',
-  marginBottom: '10px'
-};
-
-const progressBar = (score, color) => ({
-  width: `${score}%`,
-  height: '100%',
-  backgroundColor: color,
-  transition: 'width 1s ease-in-out'
-});
-
-const scoreLabel = { fontSize: '0.85rem', fontWeight: 'bold', color: '#7f8c8d', textTransform: 'uppercase' };
-const scoreValue = { fontSize: '1.5rem', fontWeight: 'bold', color: '#2c3e50' };
-
-const feedbackSection = {
-  textAlign: 'left',
-  backgroundColor: '#f9f9f9',
-  padding: '20px',
-  borderRadius: '8px',
-  borderLeft: '5px solid #3498db',
-  marginBottom: '30px'
-};
-
-const feedbackText = { lineHeight: '1.6', color: '#34495e', fontStyle: 'italic' };
-
-const buttonStyle = {
-  padding: '12px 30px',
-  backgroundColor: '#3498db',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '30px',
-  fontSize: '1rem',
-  fontWeight: 'bold',
-  cursor: 'pointer',
-  transition: 'background 0.3s'
-};
 
 export default FeedbackPage;

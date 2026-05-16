@@ -1,26 +1,31 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
-import { Camera, Code2, Monitor, Mic, MicOff, Settings2 } from 'lucide-react';
+import { Camera, Code2, Monitor, Mic, MicOff, Settings2, Play, Loader2 } from 'lucide-react';
 
-const InterviewPage = ({ socket, onStop, initialMode }) => {
+const InterviewPage = ({ socket, onStop, initialMode, setSessionVideo }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const intervalRef = useRef(null);
   const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioRef = useRef(null);
+  const chunksRef = useRef([]);
   
   const [isStarted, setIsStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState("System Ready. Initialize hardware to begin.");
   const [transcript, setTranscript] = useState("");
   const [isThinking, setIsThinking] = useState(false);
-  const [language, setLanguage] = useState('javascript');
-  const [code, setCode] = useState("// Write your solution here...");
+  const [language, setLanguage] = useState('python');
+  const [code, setCode] = useState("# Write your Python solution here...\n\ndef solution():\n    print('Hello World')\n\nsolution()\n");
   const [showEditor, setShowEditor] = useState(initialMode === 'coding');
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionResult, setExecutionResult] = useState(null);
 
   const languageTemplates = {
-    javascript: "// Write your JavaScript solution here...\n\nfunction solution() {\n  console.log('Hello World');\n}\n",
-    python: "# Write your Python solution here...\n\ndef solution():\n    print('Hello World')\n",
-    java: "// Write your Java solution here...\n\npublic class Solution {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World\");\n    }\n}\n",
-    cpp: "// Write your C++ solution here...\n\n#include <iostream>\n\nint main() {\n    std::cout << \"Hello World\" << std::endl;\n    return 0;\n}\n"
+    javascript: "// Write your JavaScript solution here...\n\nfunction solution() {\n  console.log('Hello World');\n}\nsolution();\n",
+    python: "# Write your Python solution here...\n\ndef solution():\n    print('Hello World')\n\nsolution()\n",
+    java: "public class Solution {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World\");\n    }\n}\n",
+    cpp: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello World\" << std::endl;\n    return 0;\n}\n"
   };
 
   const handleLanguageChange = (newLang) => {
@@ -28,14 +33,13 @@ const InterviewPage = ({ socket, onStop, initialMode }) => {
     setCode(languageTemplates[newLang] || "");
   };
 
-  // Fix for the background running bug: Cleanup everything on unmount
   useEffect(() => {
     return () => {
-      console.log("🧹 Cleaning up session...");
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (audioRef.current) audioRef.current.pause();
     };
   }, []);
 
@@ -47,9 +51,15 @@ const InterviewPage = ({ socket, onStop, initialMode }) => {
         setIsThinking(false);
         setCurrentQuestion(data.text);
         if (data.audio) {
+          if (audioRef.current) audioRef.current.pause();
           const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
+          audioRef.current = audio;
           audio.play().catch(e => console.error("Audio playback error", e));
         }
+      } else if (data.type === "EXECUTION_RESULT") {
+        setIsExecuting(false);
+        setExecutionResult(data.result);
+        setCurrentQuestion(data.ai_comment);
       }
     };
     socket.addEventListener('message', handleMessage);
@@ -62,37 +72,55 @@ const InterviewPage = ({ socket, onStop, initialMode }) => {
     if (video && canvas && socket?.readyState === WebSocket.OPEN && isStarted) {
       setIsThinking(true);
       const context = canvas.getContext('2d');
-      // Performance: Capture at lower resolution (720p max)
       const scale = Math.min(1, 1280 / video.videoWidth);
       canvas.width = video.videoWidth * scale;
       canvas.height = video.videoHeight * scale;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      // Performance: Lower quality JPEG (0.3) for faster network transfer
       const frameData = canvas.toDataURL('image/jpeg', 0.3);
       
       socket.send(JSON.stringify({
         frame: frameData,
         text: transcript || "Presenting...",
         code: showEditor ? code : null,
-        language: language // Pass language info to AI
+        language: language
       }));
     }
   }, [transcript, code, socket, showEditor, isStarted, language]);
 
+  const runCode = () => {
+    if (socket?.readyState === WebSocket.OPEN) {
+      setIsExecuting(true);
+      socket.send(JSON.stringify({
+        type: "EXECUTE_CODE",
+        language,
+        code
+      }));
+    }
+  };
+
   const startInterview = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ 
-        video: { frameRate: 10, width: { ideal: 1280 } }, 
+        video: { frameRate: 15, width: { ideal: 1280 } }, 
         audio: false 
       });
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       
+      // Start Recording
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => chunksRef.current.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        if (setSessionVideo) setSessionVideo(url);
+      };
+      mediaRecorder.start();
+
       setIsStarted(true);
       setCurrentQuestion("AI Agent connected. You may begin.");
-
-      // Performance: 15s interval to reduce cumulative token load
       intervalRef.current = setInterval(captureAndSend, 15000); 
       startSTT();
 
@@ -104,6 +132,7 @@ const InterviewPage = ({ socket, onStop, initialMode }) => {
 
   const stopInterview = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -117,7 +146,15 @@ const InterviewPage = ({ socket, onStop, initialMode }) => {
     if (!Recognition) return;
     const rec = new Recognition();
     rec.continuous = true;
-    rec.onresult = (e) => setTranscript(e.results[e.results.length - 1][0].transcript);
+    rec.onresult = (e) => {
+      const lastTranscript = e.results[e.results.length - 1][0].transcript;
+      setTranscript(lastTranscript);
+      // Interruption Handling: If user speaks, pause AI audio
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause();
+        console.log("🤫 Interruption detected, AI yielding...");
+      }
+    };
     rec.start();
   };
 
@@ -133,16 +170,22 @@ const InterviewPage = ({ socket, onStop, initialMode }) => {
         </div>
         <div className="session-controls">
            {showEditor && (
-             <select 
-               className="lang-select" 
-               value={language} 
-               onChange={(e) => handleLanguageChange(e.target.value)}
-             >
-               <option value="javascript">JavaScript</option>
-               <option value="python">Python</option>
-               <option value="java">Java</option>
-               <option value="cpp">C++</option>
-             </select>
+             <>
+               <select 
+                 className="lang-select" 
+                 value={language} 
+                 onChange={(e) => handleLanguageChange(e.target.value)}
+               >
+                 <option value="javascript" disabled>JavaScript (Disabled)</option>
+                 <option value="python">Python</option>
+                 <option value="java" disabled>Java (Disabled)</option>
+                 <option value="cpp" disabled>C++ (Disabled)</option>
+               </select>
+               <button className="run-btn" onClick={runCode} disabled={isExecuting}>
+                 {isExecuting ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+                 Run
+               </button>
+             </>
            )}
            <button className="icon-btn"><Settings2 size={18} /></button>
            <button className={`toggle-btn ${showEditor ? 'active' : ''}`} onClick={() => setShowEditor(!showEditor)}>
@@ -153,18 +196,28 @@ const InterviewPage = ({ socket, onStop, initialMode }) => {
 
       <div className={`session-content ${showEditor ? 'split' : 'full'}`}>
         {showEditor && (
-          <div className="editor-wrapper glass-card">
-             <div className="pane-header">
-               <Code2 size={14} /> SCRATCHPAD.{language === 'python' ? 'py' : language === 'cpp' ? 'cpp' : 'js'}
-             </div>
-             <Editor
-               height="500px"
-               language={language}
-               value={code}
-               theme="vs-dark"
-               onChange={(v) => setCode(v)}
-               options={{ fontSize: 14, minimap: { enabled: false }, padding: { top: 20 } }}
-             />
+          <div className="editor-layout">
+            <div className="editor-wrapper glass-card">
+               <div className="pane-header">
+                 <Code2 size={14} /> SCRATCHPAD.{language === 'python' ? 'py' : language === 'cpp' ? 'cpp' : 'js'}
+               </div>
+               <Editor
+                 height="400px"
+                 language={language}
+                 value={code}
+                 theme="vs-dark"
+                 onChange={(v) => setCode(v)}
+                 options={{ fontSize: 14, minimap: { enabled: false }, padding: { top: 20 } }}
+               />
+            </div>
+            {executionResult && (
+              <div className="terminal-wrapper glass-card">
+                <div className="pane-header">TERMINAL</div>
+                <pre className="terminal-output">
+                  {executionResult.output || "No output"}
+                </pre>
+              </div>
+            )}
           </div>
         )}
 
